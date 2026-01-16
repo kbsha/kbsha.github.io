@@ -63,9 +63,11 @@ Or simpler syntax:
 
 ### Example Video (Replace with Your Video ID):
 
+```html
 <div class="video-container">
-    <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ"></iframe>
+    <iframe src="https://www.youtube.com/embed/VIDEO_ID_HERE"></iframe>
 </div>
+```
 
 *To find the video ID: Go to any YouTube video. The URL is `youtube.com/watch?v=VIDEO_ID`. Copy that ID into the iframe src.*
 
