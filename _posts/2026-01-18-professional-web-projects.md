@@ -55,10 +55,8 @@ Videos are a powerful way to explain concepts. Use this format:
 ```
 
 Or simpler syntax:
-```
-<div class="video-container">
-    <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ"></iframe>
-</div>
+```html
+<iframe src="https://www.youtube.com/embed/VIDEO_ID_HERE"></iframe>
 ```
 
 ### Example Video (Replace with Your Video ID):
