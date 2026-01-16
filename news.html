@@ -175,6 +175,16 @@
         </div>
         
         <ul class="post-list">
+            <!-- Jekyll Liquid - Automatically list all posts from _posts folder -->
+            {% for post in site.posts %}
+            <li class="post-item">
+                <h3>{{ post.title }}</h3>
+                <p class="post-date">{{ post.date | date: "%B %d, %Y" }}</p>
+                <p>{{ post.excerpt | strip_html | truncatewords: 30 }}</p>
+                <a href="{{ post.url }}" class="post-link">Read More →</a>
+            </li>
+            {% endfor %}
+
             <!-- Fallback posts for local viewing -->
             <li class="post-item">
                 <h3>Aotonomous Dron</h3>
