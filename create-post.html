@@ -579,15 +579,36 @@ categories: ${category}
                 // Upload image to GitHub if image file was selected
                 if (imageFile && !imageUrl) {
                     console.log('Uploading image to GitHub...');
+                    console.log('Image file:', imageFile.name, 'Size:', imageFile.size);
+                    
                     const reader = new FileReader();
+                    reader.onerror = function() {
+                        alert('❌ Error reading image file');
+                        uploadBtn.textContent = originalText;
+                        uploadBtn.disabled = false;
+                    };
+                    
                     reader.onload = async function(e) {
                         try {
                             // Generate image filename
-                            const imageFilename = `images/${Date.now()}-${imageFile.name}`;
-                            const imageBase64 = e.target.result.split(',')[1];
+                            const timestamp = Date.now();
+                            const cleanFileName = imageFile.name.replace(/[^a-z0-9.-]/gi, '_');
+                            const imageFilename = `images/${timestamp}-${cleanFileName}`;
+                            
+                            // Get base64 from data URL
+                            const base64String = e.target.result.split(',')[1];
+                            
+                            if (!base64String) {
+                                throw new Error('Failed to convert image to base64');
+                            }
+                            
+                            console.log('Image filename:', imageFilename);
+                            console.log('Base64 length:', base64String.length);
                             
                             // Upload image to GitHub
                             const imageUploadUrl = `https://api.github.com/repos/${username}/${repo}/contents/${imageFilename}`;
+                            
+                            console.log('Uploading to:', imageUploadUrl);
                             
                             const imageResponse = await fetch(imageUploadUrl, {
                                 method: 'PUT',
@@ -597,15 +618,19 @@ categories: ${category}
                                     'Accept': 'application/vnd.github.v3+json'
                                 },
                                 body: JSON.stringify({
-                                    message: `Add image: ${imageFile.name}`,
-                                    content: imageBase64
+                                    message: `Add image: ${cleanFileName}`,
+                                    content: base64String
                                 })
                             });
+
+                            console.log('Image upload response:', imageResponse.status);
 
                             if (imageResponse.ok) {
                                 // Replace data URL with GitHub URL
                                 const imageData = await imageResponse.json();
                                 const githubImageUrl = `https://raw.githubusercontent.com/${username}/${repo}/main/${imageFilename}`;
+                                
+                                console.log('Image uploaded successfully to:', githubImageUrl);
                                 
                                 // Update post content with GitHub image URL
                                 postContent = content.replace(/!\[([^\]]*)\]\(data:.*?\)/g, 
@@ -614,9 +639,12 @@ categories: ${category}
                                 // Now upload the post
                                 await uploadPost(token, username, repo, filename, postContent, uploadBtn, originalText);
                             } else {
-                                throw new Error('Image upload failed');
+                                const errorData = await imageResponse.json();
+                                console.log('Image upload error:', errorData);
+                                throw new Error('Image upload failed: ' + (errorData.message || 'Unknown error'));
                             }
                         } catch (error) {
+                            console.error('Image upload error:', error);
                             alert('❌ Error uploading image:\n' + error.message);
                             uploadBtn.textContent = originalText;
                             uploadBtn.disabled = false;
