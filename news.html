@@ -175,7 +175,24 @@
         </div>
         
         <ul class="post-list">
-            <!-- Posts will be listed here -->
+            <!-- Jekyll Liquid for GitHub Pages (automatic posts) -->
+            {% for post in site.posts %}
+            <li class="post-item">
+                <h3>{{ post.title }}</h3>
+                <p class="post-date">{{ post.date | date: "%B %d, %Y" }}</p>
+                <p>{{ post.excerpt | strip_html | truncatewords: 30 }}</p>
+                <a href="{{ post.url }}" class="post-link">Read More →</a>
+            </li>
+            {% endfor %}
+            
+            <!-- Fallback posts for local testing (when not using Jekyll) -->
+            <li class="post-item">
+                <h3>Aotonomous Dron</h3>
+                <p class="post-date">January 16, 2026</p>
+                <p>i test test test ....</p>
+                <a href="#" class="post-link">Read More →</a>
+            </li>
+
             <li class="post-item">
                 <h3>Getting Started with Web Development</h3>
                 <p class="post-date">January 16, 2026</p>
