@@ -13,5 +13,5 @@ x------------------------------y
 zzzzzzzzzzzzzzzzzzzz
 
 <div class="video-container">
-    <iframe src="https://www.youtube.com/embed/https://www.youtube.com/watch?v=B96JGoWQOsE&t=1263s"></iframe>
+    <iframe src="https://www.youtube.com/embed/B96JGoWQOsE" width="560" height="315" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
