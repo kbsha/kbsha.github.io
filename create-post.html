@@ -242,6 +242,11 @@
                     📌 Fill in the form and click "Generate Preview" to see your post format
                 </div>
 
+                <div class="info-box" style="background-color: #fff3cd; border-left-color: #ff9800; color: #856404;">
+                    🔑 To upload directly to GitHub: Get your Personal Access Token
+                    <a href="https://github.com/settings/tokens" target="_blank" style="color: #ff9800; font-weight: bold;">here</a>
+                </div>
+
                 <form id="postForm">
                     <div class="form-group">
                         <label for="postTitle">📝 Post Title *</label>
@@ -281,6 +286,27 @@
                         <button type="button" class="btn-generate" onclick="generatePreview()">🔄 Generate Preview</button>
                         <button type="reset" class="btn-reset">🔄 Clear Form</button>
                     </div>
+
+                    <hr style="margin: 30px 0; border: none; border-top: 2px solid #ddd;">
+
+                    <h3 style="color: #333; margin-bottom: 15px;">📤 GitHub Upload Settings</h3>
+                    <div class="form-group">
+                        <label for="githubToken">🔑 GitHub Personal Access Token *</label>
+                        <input type="password" id="githubToken" name="githubToken" placeholder="Paste your GitHub token here (not saved)">
+                        <small style="color: #666; font-size: 12px; display: block; margin-top: 5px;">
+                            Get token: <a href="https://github.com/settings/tokens" target="_blank" style="color: #2196F3;">github.com/settings/tokens</a>
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="githubUsername">👤 GitHub Username *</label>
+                        <input type="text" id="githubUsername" name="githubUsername" placeholder="e.g., kbsha">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="githubRepo">📁 Repository Name *</label>
+                        <input type="text" id="githubRepo" name="githubRepo" placeholder="e.g., kbsha.github.io">
+                    </div>
                 </form>
             </div>
 
@@ -301,6 +327,10 @@
                 <div class="button-group" style="margin-top: 20px;">
                     <button type="button" class="btn-copy" onclick="copyToClipboard()" id="copyBtn" style="display: none;">📋 Copy Code</button>
                     <button type="button" class="btn-download" onclick="downloadFile()" id="downloadBtn" style="display: none;">⬇️ Download File</button>
+                </div>
+
+                <div class="button-group" style="margin-top: 15px;">
+                    <button type="button" class="btn-generate" onclick="uploadToGitHub()" id="uploadBtn" style="display: none; background-color: #ff6b6b;">📤 Upload to GitHub</button>
                 </div>
             </div>
         </div>
@@ -351,6 +381,7 @@ categories: ${category}
             document.getElementById('successMessage').style.display = 'block';
             document.getElementById('copyBtn').style.display = 'block';
             document.getElementById('downloadBtn').style.display = 'block';
+            document.getElementById('uploadBtn').style.display = 'block';
 
             // Scroll to preview
             document.querySelector('.preview-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -413,6 +444,84 @@ categories: ${category}
             setTimeout(() => {
                 msg.remove();
             }, 3000);
+        }
+
+        // GitHub API Upload Function
+        async function uploadToGitHub() {
+            const token = document.getElementById('githubToken').value.trim();
+            const username = document.getElementById('githubUsername').value.trim();
+            const repo = document.getElementById('githubRepo').value.trim();
+            const content = document.getElementById('previewContent').textContent;
+            const filename = document.getElementById('filename').textContent;
+
+            // Validate GitHub credentials
+            if (!token || !username || !repo) {
+                alert('Please fill in all GitHub credentials:\n- GitHub Token\n- Username\n- Repository name');
+                return;
+            }
+
+            // Show loading state
+            const uploadBtn = document.getElementById('uploadBtn');
+            const originalText = uploadBtn.textContent;
+            uploadBtn.textContent = '⏳ Uploading...';
+            uploadBtn.disabled = true;
+
+            try {
+                // Encode content to base64
+                const encodedContent = btoa(unescape(encodeURIComponent(content)));
+                
+                // GitHub API endpoint
+                const url = `https://api.github.com/repos/${username}/${repo}/contents/_posts/${filename}`;
+                
+                // Make API request
+                const response = await fetch(url, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/vnd.github.v3+json'
+                    },
+                    body: JSON.stringify({
+                        message: `Add new post: ${filename}`,
+                        content: encodedContent,
+                        branch: 'main'
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showCopyMessage('✅ Post uploaded to GitHub successfully!');
+                    
+                    // Show success with link
+                    const successDiv = document.createElement('div');
+                    successDiv.style.cssText = 'background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 15px; border-radius: 5px; margin-top: 15px;';
+                    successDiv.innerHTML = `
+                        ✅ <strong>Upload Successful!</strong><br>
+                        📁 File: ${filename}<br>
+                        🔗 <a href="${data.html_url}" target="_blank" style="color: #155724; font-weight: bold;">View on GitHub</a><br>
+                        ⏱️ Give GitHub Pages 1-2 minutes to build
+                    `;
+                    document.querySelector('.preview-section').appendChild(successDiv);
+
+                    // Clear GitHub fields after success
+                    setTimeout(() => {
+                        document.getElementById('githubToken').value = '';
+                    }, 2000);
+
+                } else if (response.status === 401) {
+                    alert('❌ Invalid GitHub token. Please check your token.');
+                } else if (response.status === 404) {
+                    alert('❌ Repository not found. Check username and repo name.');
+                } else {
+                    const error = await response.json();
+                    alert('❌ Error: ' + (error.message || 'Upload failed'));
+                }
+            } catch (error) {
+                alert('❌ Error uploading to GitHub:\n' + error.message);
+            } finally {
+                uploadBtn.textContent = originalText;
+                uploadBtn.disabled = false;
+            }
         }
     </script>
 </body>
