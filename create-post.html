@@ -288,12 +288,49 @@
                             <strong>Formatting Guide:</strong><br>
                             • Headings: # H1, ## H2, ### H3<br>
                             • Bold: **text**<br>
-                            • Italic: *text*<br>
                             • Lists: - item or 1. item<br>
-                            • Links: [text](url)<br>
-                            • Images: ![alt](url)<br>
-                            • Code: \`code\` or \`\`\`code\`\`\`<br>
-                            • Videos: &lt;div class="video-container"&gt;&lt;iframe src="youtube-embed-url"&gt;&lt;/iframe&gt;&lt;/div&gt;
+                            • Image: ![alt](image-url)<br>
+                            • Video: [Watch Video](youtube-link)
+                        </small>
+                    </div>
+
+                    <hr style="margin: 20px 0; border: none; border-top: 2px solid #ddd;">
+                    <h3 style="color: #333; margin: 15px 0;">📸 Add Media</h3>
+
+                    <div class="form-group">
+                        <label for="imageUrl">🖼️ Image URL (optional)</label>
+                        <input type="text" id="imageUrl" name="imageUrl" placeholder="https://example.com/image.jpg">
+                        <small style="color: #666; font-size: 12px; display: block; margin-top: 5px;">
+                            Use placeholder images: https://via.placeholder.com/800x400?text=Your+Text
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="imageFile">📱 Or Upload Image from Computer</label>
+                        <input type="file" id="imageFile" name="imageFile" accept="image/*">
+                        <small style="color: #666; font-size: 12px; display: block; margin-top: 5px;">
+                            ⚠️ Local file upload is converted to data URL. For better performance, upload to <a href="https://imgur.com" target="_blank" style="color: #2196F3;">Imgur</a> or <a href="https://cloudinary.com" target="_blank" style="color: #2196F3;">Cloudinary</a> first and paste the link.
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="imageCaption">📝 Image Caption (optional)</label>
+                        <input type="text" id="imageCaption" name="imageCaption" placeholder="Description of the image">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="youtubeId">🎥 YouTube Video ID (optional)</label>
+                        <input type="text" id="youtubeId" name="youtubeId" placeholder="dQw4w9WgXcQ (from youtube.com/watch?v=dQw4w9WgXcQ)">
+                        <small style="color: #666; font-size: 12px; display: block; margin-top: 5px;">
+                            Get the ID from YouTube URL: youtube.com/watch?v=<strong>VIDEO_ID_HERE</strong>
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="videoFile">📹 Or Upload Video from Computer</label>
+                        <input type="file" id="videoFile" name="videoFile" accept="video/*">
+                        <small style="color: #666; font-size: 12px; display: block; margin-top: 5px;">
+                            ⚠️ Local file upload is converted to data URL. For better performance, use YouTube or upload to <a href="https://vimeo.com" target="_blank" style="color: #2196F3;">Vimeo</a> first.
                         </small>
                     </div>
 
@@ -364,12 +401,65 @@
             const author = document.getElementById('authorName').value.trim();
             const date = document.getElementById('postDate').value;
             const category = document.getElementById('category').value;
-            const content = document.getElementById('postContent').value.trim();
+            let content = document.getElementById('postContent').value.trim();
+            let imageUrl = document.getElementById('imageUrl').value.trim();
+            const imageCaption = document.getElementById('imageCaption').value.trim();
+            const youtubeId = document.getElementById('youtubeId').value.trim();
+            const imageFile = document.getElementById('imageFile').files[0];
+            const videoFile = document.getElementById('videoFile').files[0];
 
             // Validate
             if (!title || !author || !date || !category || !content) {
-                alert('Please fill in all fields!');
+                alert('Please fill in: Title, Author, Date, Category, and Content!');
                 return;
+            }
+
+            // Handle image file upload
+            if (imageFile && !imageUrl) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imageUrl = e.target.result;
+                    generatePreviewContent(title, author, date, category, content, imageUrl, imageCaption, youtubeId, videoFile);
+                };
+                reader.readAsDataURL(imageFile);
+                return;
+            }
+
+            // Handle video file upload
+            if (videoFile) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const videoUrl = e.target.result;
+                    generatePreviewContent(title, author, date, category, content, imageUrl, imageCaption, youtubeId, videoFile, videoUrl);
+                };
+                reader.readAsDataURL(videoFile);
+                return;
+            }
+
+            generatePreviewContent(title, author, date, category, content, imageUrl, imageCaption, youtubeId, videoFile);
+        }
+
+        function generatePreviewContent(title, author, date, category, content, imageUrl, imageCaption, youtubeId, videoFile, videoUrl) {
+            // Add image if provided
+            if (imageUrl) {
+                const imageMD = `![${imageCaption || 'Image'}](${imageUrl})\n`;
+                if (imageCaption) {
+                    content = imageMD + `*${imageCaption}*\n\n` + content;
+                } else {
+                    content = imageMD + content;
+                }
+            }
+
+            // Add YouTube video if provided
+            if (youtubeId) {
+                const videoDIV = `\n\n<div class="video-container">\n    <iframe src="https://www.youtube.com/embed/${youtubeId}"></iframe>\n</div>\n`;
+                content = content + videoDIV;
+            }
+
+            // Add uploaded video if provided
+            if (videoUrl && videoFile) {
+                const videoHTML = `\n\n<video width="100%" controls style="border-radius: 10px; margin: 20px 0;">\n    <source src="${videoUrl}" type="${videoFile.type}">\n    Your browser does not support the video tag.\n</video>\n`;
+                content = content + videoHTML;
             }
 
             // Generate filename from title
@@ -468,6 +558,7 @@ categories: ${category}
             const repo = document.getElementById('githubRepo').value.trim();
             const content = document.getElementById('previewContent').textContent;
             const filename = document.getElementById('filename').textContent;
+            const imageFile = document.getElementById('imageFile').files[0];
 
             // Validate GitHub credentials
             if (!token || !username || !repo) {
@@ -481,6 +572,69 @@ categories: ${category}
             uploadBtn.textContent = '⏳ Uploading...';
             uploadBtn.disabled = true;
 
+            try {
+                let postContent = content;
+                let imageUrl = document.getElementById('imageUrl').value.trim();
+
+                // Upload image to GitHub if image file was selected
+                if (imageFile && !imageUrl) {
+                    console.log('Uploading image to GitHub...');
+                    const reader = new FileReader();
+                    reader.onload = async function(e) {
+                        try {
+                            // Generate image filename
+                            const imageFilename = `images/${Date.now()}-${imageFile.name}`;
+                            const imageBase64 = e.target.result.split(',')[1];
+                            
+                            // Upload image to GitHub
+                            const imageUploadUrl = `https://api.github.com/repos/${username}/${repo}/contents/${imageFilename}`;
+                            
+                            const imageResponse = await fetch(imageUploadUrl, {
+                                method: 'PUT',
+                                headers: {
+                                    'Authorization': `token ${token}`,
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/vnd.github.v3+json'
+                                },
+                                body: JSON.stringify({
+                                    message: `Add image: ${imageFile.name}`,
+                                    content: imageBase64
+                                })
+                            });
+
+                            if (imageResponse.ok) {
+                                // Replace data URL with GitHub URL
+                                const imageData = await imageResponse.json();
+                                const githubImageUrl = `https://raw.githubusercontent.com/${username}/${repo}/main/${imageFilename}`;
+                                
+                                // Update post content with GitHub image URL
+                                postContent = content.replace(/!\[([^\]]*)\]\(data:.*?\)/g, 
+                                    `![Image](${githubImageUrl})`);
+                                
+                                // Now upload the post
+                                await uploadPost(token, username, repo, filename, postContent, uploadBtn, originalText);
+                            } else {
+                                throw new Error('Image upload failed');
+                            }
+                        } catch (error) {
+                            alert('❌ Error uploading image:\n' + error.message);
+                            uploadBtn.textContent = originalText;
+                            uploadBtn.disabled = false;
+                        }
+                    };
+                    reader.readAsDataURL(imageFile);
+                } else {
+                    // No image file, just upload post
+                    await uploadPost(token, username, repo, filename, postContent, uploadBtn, originalText);
+                }
+            } catch (error) {
+                alert('❌ Error:\n' + error.message);
+                uploadBtn.textContent = originalText;
+                uploadBtn.disabled = false;
+            }
+        }
+
+        async function uploadPost(token, username, repo, filename, content, uploadBtn, originalText) {
             try {
                 // Encode content to base64
                 const encodedContent = btoa(unescape(encodeURIComponent(content)));
@@ -505,16 +659,17 @@ categories: ${category}
 
                 if (response.ok) {
                     const data = await response.json();
-                    showCopyMessage('✅ Post uploaded to GitHub successfully!');
+                    showCopyMessage('✅ Post & images uploaded to GitHub!');
                     
                     // Show success with link
                     const successDiv = document.createElement('div');
                     successDiv.style.cssText = 'background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 15px; border-radius: 5px; margin-top: 15px;';
                     successDiv.innerHTML = `
                         ✅ <strong>Upload Successful!</strong><br>
-                        📁 File: ${filename}<br>
+                        📁 Post: ${filename}<br>
+                        🖼️ Images saved to: /images/ folder<br>
                         🔗 <a href="${data.html_url}" target="_blank" style="color: #155724; font-weight: bold;">View on GitHub</a><br>
-                        ⏱️ Give GitHub Pages 1-2 minutes to build
+                        ⏱️ Give GitHub Pages 2-3 minutes to build
                     `;
                     document.querySelector('.preview-section').appendChild(successDiv);
 
@@ -532,7 +687,7 @@ categories: ${category}
                     alert('❌ Error: ' + (error.message || 'Upload failed'));
                 }
             } catch (error) {
-                alert('❌ Error uploading to GitHub:\n' + error.message);
+                alert('❌ Error uploading post:\n' + error.message);
             } finally {
                 uploadBtn.textContent = originalText;
                 uploadBtn.disabled = false;
